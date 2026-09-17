@@ -12,6 +12,7 @@ on:
 permissions:
   contents: read
   actions: write
+  id-token: write
 
 jobs:
   deploy-staging:
@@ -33,7 +34,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: 0945496f-76ad-452f-8beb-6efd0494add1
+          tenant-id: 2625129d-99a2-4df5-988e-5c5d07e7d0fb
+          subscription-id: 0f1759f3-5570-48b0-bfcc-53afaae37565
 
       - name: Get AKS credentials
         run: |
