@@ -39,9 +39,11 @@ describe("Login page", () => {
     renderLogin();
 
     expect(
-      screen.getByText(
-        "KoalaTech University"
-      )
+      screen.getByText("KoalaTech University - DevOps")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Student ID: S225206231")
     ).toBeInTheDocument();
 
     expect(
