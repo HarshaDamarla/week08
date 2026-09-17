@@ -9,6 +9,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   smoke-test:
     name: Staging Smoke Test
@@ -61,3 +65,17 @@ jobs:
             --retry 10 \
             --retry-delay 5 \
             http://${{ env.FRONTEND_IP }}
+      - name: Download tested image SHA
+        uses: actions/download-artifact@v4
+        with:
+          name: tested-image-sha
+          path: ./release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Upload validated image SHA
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-image-sha
+          path: ./release/tested-image-sha.txt
+          retention-days: 1

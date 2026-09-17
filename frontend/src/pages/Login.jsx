@@ -87,19 +87,31 @@ const Login = () => {
 
   return (
     <Container maxWidth="sm">
-      <Card sx={{ mt: 10 }}>
+      <Card
+        sx={{
+          mt: 10,
+          backgroundColor: "#E3F2FD",
+          borderRadius: 3,
+          boxShadow: 4,
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <Typography
             variant="h4"
             gutterBottom
+            sx={{ color: "#1565C0", fontWeight: "bold" }}
           >
-            KoalaTech University
+            KoalaTech University - DevOps
           </Typography>
 
           <Typography
-            color="text.secondary"
-            sx={{ mb: 3 }}
+            variant="subtitle1"
+            sx={{ color: "#1565C0", mb: 2 }}
           >
+            Student ID: S225206231
+          </Typography>
+
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
             Sign in to continue
           </Typography>
 
