@@ -125,6 +125,15 @@ jobs:
             enrollment-service=${{ vars.ACR_LOGIN_SERVER }}/koalatech-enrollment-service:${{ steps.image.outputs.sha }} \
             -n production
 
+      - name: Restart services to load updated secrets
+        run: |
+          kubectl rollout restart deployment/user-service \
+            deployment/student-service \
+            deployment/lecturer-service \
+            deployment/course-service \
+            deployment/enrollment-service \
+            -n production
+
       - name: Wait for frontend rollout
         run: |
           kubectl rollout status deployment/frontend \
