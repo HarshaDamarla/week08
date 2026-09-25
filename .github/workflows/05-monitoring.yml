@@ -1,0 +1,104 @@
+name: 05 - Monitoring
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "04 - Deploy to Production"
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-and-verify-monitoring:
+    name: Deploy and Verify Prometheus and Grafana
+    runs-on: ubuntu-latest
+
+    if: >
+      ${{ github.event_name == 'workflow_dispatch' ||
+          github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ vars.AKS_RESOURCE_GROUP }} \
+            --name ${{ vars.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Verify AKS connection
+        run: |
+          kubectl get nodes
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Add Prometheus Community Helm repository
+        run: |
+          helm repo add prometheus-community \
+            https://prometheus-community.github.io/helm-charts
+          helm repo update
+
+      - name: Deploy Prometheus and Grafana
+        run: |
+          helm upgrade --install monitoring \
+            prometheus-community/kube-prometheus-stack \
+            --namespace monitoring \
+            --create-namespace \
+            --wait \
+            --timeout 10m
+
+      - name: Verify monitoring components
+        run: |
+          echo "===== MONITORING PODS ====="
+          kubectl get pods -n monitoring
+
+          echo "===== PROMETHEUS ====="
+          kubectl get prometheus -n monitoring
+
+          echo "===== SERVICES ====="
+          kubectl get svc -n monitoring
+
+          echo "===== HELM RELEASE ====="
+          helm list -n monitoring
+
+      - name: Verify production application
+        run: |
+          echo "===== PRODUCTION WORKLOADS ====="
+          kubectl get pods -n production
+
+          echo "===== PRODUCTION FRONTEND ====="
+          kubectl get svc frontend -n production
+
+          FRONTEND_IP=$(kubectl get svc frontend \
+            -n production \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+          if [ -z "$FRONTEND_IP" ]; then
+            echo "Production frontend external IP was not found."
+            exit 1
+          fi
+
+          echo "Production frontend IP: $FRONTEND_IP"
+
+          curl \
+            --fail \
+            --retry 10 \
+            --retry-delay 5 \
+            --max-time 15 \
+            "http://${FRONTEND_IP}"
